@@ -4,7 +4,6 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 const dpr = window.devicePixelRatio;
-console.log(dpr);
 
 canvas.width = window.innerWidth * dpr;
 canvas.height = window.innerHeight * dpr;
@@ -31,9 +30,9 @@ const letterWidth = measurements.width;
 const heightAbove = measurements.fontBoundingBoxAscent;
 const heightBelow = measurements.fontBoundingBoxDescent;
 
+const leftMargin = 50;
+
 const letterHeight = heightAbove + heightBelow;
-console.log(letterWidth);
-console.log(letterHeight);
 
 class Point {
     constructor(x,y) {
@@ -42,6 +41,10 @@ class Point {
     }
     advance() {
         this.x += letterWidth;
+        if (this.x > leftMargin + charPerLine * letterWidth) {
+            this.x = leftMargin;
+            this.y += letterHeight;
+        }
     }
     retreat() {
         if (this.x > 50) {
@@ -52,20 +55,18 @@ class Point {
             this.x = charPerLine * letterWidth;
         }
     }
+    nextLine() {
+        this.x = leftMargin;
+        this.y += letterHeight;
+    }
 }
 
-let charPerLine = 80;
-
+let charPerLine = 30;
 let cursor = new Point(50, 50);
-
-
 
 let mode = "insert";
 let backgroundColor = "white";
 let letterColor = "black";
-
-let currentX = 0;
-let currentY = 50;
 
 ctx.fillStyle = "black";
 
@@ -88,13 +89,17 @@ function handleKeydown(event) {
     }
 }
 
-function insert(point, key) {
+function insert(cursor, key) {
     if (key == "Backspace") {
-        point.retreat;
+        cursor.retreat();
+        clear(cursor);
         
     }
+    else if (key == "Enter") {
+        cursor.nextLine();
+    }
     else {
-        type(point, key);
+        type(cursor, key);
     }
 }
 
