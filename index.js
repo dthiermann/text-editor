@@ -35,31 +35,30 @@ const letterHeight = heightAbove + heightBelow;
 console.log(letterWidth);
 console.log(letterHeight);
 
-// text editing logic:
-
-let rowWidth = 80;
-
-let rows = [[""]];
-let cursor = new Point(0,0);
-
 class Point {
     constructor(x,y) {
         this.x = x;
         this.y = y;
     }
     advance() {
-        this.x ++;
+        this.x += letterWidth;
     }
     retreat() {
-        if (this.x > 0) {
-            this.x --;
+        if (this.x > 50) {
+            this.x -= letterWidth;
         }
         if (this.x == 0 && this.y > 0) {
-            this.y --;
-            this.x = rows[y].length;
+            this.y -= letterHeight;
+            this.x = charPerLine * letterWidth;
         }
     }
 }
+
+let charPerLine = 80;
+
+let cursor = new Point(50, 50);
+
+
 
 let mode = "insert";
 let backgroundColor = "white";
@@ -73,7 +72,7 @@ ctx.fillStyle = "black";
 let enterInsertModeKey = "i";
 let enterNavModeKey = "CapsLock";
 
-function handleKeydown(cursor, event) {
+function handleKeydown(event) {
     if (mode == "insert") {
         if (event.key == enterNavModeKey) {
             mode == "navigation";
@@ -100,7 +99,8 @@ function insert(point, key) {
 }
 
 function type(point, key) {
-    rows[point.x].splice(point.y, 0, key);
+    ctx.fillText(key, point.x, point.y);
+    cursor.advance();
 }
 
 
