@@ -58,6 +58,8 @@ for (let i = 0; i < numberOfLines; i++) {
     rows.push(row);
 }
 
+
+
 class Point {
     constructor(x,y) {
         this.x = x;
@@ -115,7 +117,9 @@ class Cursor {
 
 }
 
-let cursor = new Point(0,0);
+let position = new Point(0,0);
+makeCursor(position, "black");
+
 
 function next(point) {
     let nextX = point.x + 1;
@@ -133,7 +137,15 @@ function render(point) {
     makeText(point, charAt(point), letterColor);
 }
 
-
+function handleKeydown(event) {
+  let key = event.key;
+  makeRect(position, backgroundColor);
+  makeText(position, key, letterColor);
+  position.advance();
+  makeCursor(position, "black");
+  
+}
+/*
 function handleKeydown(event) {
     if (mode == "insert") {
         if (event.key == enterNavModeKey) {
@@ -151,25 +163,17 @@ function handleKeydown(event) {
 }
 
 function insertModeHandle(key) {
-    if (key == "Backspace") {
-        makeRect(cursor, backgroundColor);
-        cursor.retreat();
-        
-    }
-    else if (key == "Enter") {
-        cursor.nextLine();
-    }
-    else {
-        cursor = type(cursor, key);
-    }
+  type(position, key);
 }
+*/
+
 
 function makeRect(point, color) {
     let x = point.getPixelX();
     let y = point.getPixelY();
 
     ctx.fillStyle = color;
-    ctx.fillRect(x, y, letterWidth, letterHeight);
+    ctx.fillRect(x, y - heightAbove, letterWidth, letterHeight);
 }
 
 function makeText(point, key, color) {
@@ -183,14 +187,13 @@ function makeText(point, key, color) {
     rows[point.y][point.x] = key;
 }
 
-function type(point, key) {
-    makeRect(point, backgroundColor);
-    makeText(point, key, letterColor);
+function type(key) {
+  makeRect(position, backgroundColor);
+  makeText(position, key, letterColor);
+  position.advance();
 
-    let newPoint = next(point);
-
-    makeCursor(newPoint, cursorColor);
-    return newPoint;
+  makeCursor(position, cursorColor);
+    
 
 }
 
@@ -209,9 +212,7 @@ function makeCursor(point, color) {
     let x = point.getPixelX();
     let y = point.getPixelY();
 
-    console.log(y);
-
-    ctx.fillRect(x,y, 5, letterHeight);
+    ctx.fillRect(x,y - heightAbove, 5, heightAbove);
 }
 
 window.addEventListener("keydown", handleKeydown);
