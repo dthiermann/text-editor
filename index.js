@@ -31,47 +31,108 @@ const heightAbove = measurements.fontBoundingBoxAscent;
 const heightBelow = measurements.fontBoundingBoxDescent;
 
 const leftMargin = 50;
+const topMargin = 50;
 
 const letterHeight = heightAbove + heightBelow;
+
+let numberOfLines = 100;
+
+let charPerLine = 30;
+
+
+let mode = "insert";
+let backgroundColor = "white";
+let letterColor = "black";
+let selectionColor = "blue";
+let cursorColor = "black";
+
+let enterInsertModeKey = "i";
+let enterNavModeKey = "CapsLock";
+
+let rows = [];
+for (let i = 0; i < numberOfLines; i++) {
+    let row = [];
+    for (let k = 0; k < charPerLine; k++) {
+        row.push("");
+    }
+    rows.push(row);
+}
 
 class Point {
     constructor(x,y) {
         this.x = x;
         this.y = y;
     }
+
+    getPixelX() {
+        return leftMargin + this.x * letterWidth;
+    }
+
+    getPixelY() {
+        return topMargin + this.y * letterHeight;
+    }
+
     advance() {
-        this.x += letterWidth;
-        if (this.x > leftMargin + charPerLine * letterWidth) {
-            this.x = leftMargin;
-            this.y += letterHeight;
+        this.x ++;
+        if (this.x > charPerLine) {
+            this.x = 0;
+            this.y ++;
         }
     }
     retreat() {
-        if (this.x > 50) {
-            this.x -= letterWidth;
+        if (this.x > charPerLine) {
+            this.x --;
         }
         if (this.x == 0 && this.y > 0) {
-            this.y -= letterHeight;
-            this.x = charPerLine * letterWidth;
+            this.y --;
+            this.x = charPerLine;
         }
     }
     nextLine() {
-        this.x = leftMargin;
-        this.y += letterHeight;
+        this.x = 0;
+        this.y ++;
     }
 }
 
-let charPerLine = 30;
-let cursor = new Point(50, 50);
+class Cursor {
+    constructor(location, color) {
+        this.location = location;
+        this.color = color;
+    }
 
-let mode = "insert";
-let backgroundColor = "white";
-let letterColor = "black";
+    moveTo(newLocation) {
+        render(location);
 
-ctx.fillStyle = "black";
+        this.location = newLocation;
+        ctx.fillStyle = this.color;
+    
+        let x = newLocation.getPixelX();
+        let y = newLocation.getPixelY();
 
-let enterInsertModeKey = "i";
-let enterNavModeKey = "CapsLock";
+        ctx.fillRect(x,y, 5, letterHeight);
+
+    }
+
+}
+
+let cursor = new Point(0,0);
+
+function next(point) {
+    let nextX = point.x + 1;
+    let nextY = point.y;
+    if (point.x > charPerLine) {
+        nextX = 0;
+        nextY = point.y + 1;
+    }
+    return new Point(nextX, nextY);
+}
+
+// clears point and paints character at point
+function render(point) {
+    makeRect(point, backgroundColor);
+    makeText(point, charAt(point), letterColor);
+}
+
 
 function handleKeydown(event) {
     if (mode == "insert") {
@@ -80,7 +141,7 @@ function handleKeydown(event) {
             return;
         }
         else {
-            insert(cursor, event.key);
+            insertModeHandle(event.key);
         }
 
     }
@@ -89,65 +150,69 @@ function handleKeydown(event) {
     }
 }
 
-function insert(cursor, key) {
+function insertModeHandle(key) {
     if (key == "Backspace") {
+        makeRect(cursor, backgroundColor);
         cursor.retreat();
-        clear(cursor);
         
     }
     else if (key == "Enter") {
         cursor.nextLine();
     }
     else {
-        type(cursor, key);
+        cursor = type(cursor, key);
     }
+}
+
+function makeRect(point, color) {
+    let x = point.getPixelX();
+    let y = point.getPixelY();
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, letterWidth, letterHeight);
+}
+
+function makeText(point, key, color) {
+    let x = point.getPixelX();
+    let y = point.getPixelY();
+
+    ctx.fillStyle = color;
+    console.log(y);
+    ctx.fillText(key, x, y);
+
+    rows[point.y][point.x] = key;
 }
 
 function type(point, key) {
-    ctx.fillText(key, point.x, point.y);
-    cursor.advance();
+    makeRect(point, backgroundColor);
+    makeText(point, key, letterColor);
+
+    let newPoint = next(point);
+
+    makeCursor(newPoint, cursorColor);
+    return newPoint;
+
 }
 
-
-class Node {
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
-    }
+function charAt(cursor) {
+    return rows[cursor.x][cursor.y];
 }
 
-
-
-
-
-
-
-
-
-function retreat(place) {
-    if (place.x == 0 && place.y > 0) {
-        let y = place.y - 1;
-        let x = rowWidth * letterWidth;
-    }
-    if (place.x > 0) {
-        let x = place.x - 1;
-        let y = place.y;
-    }
-    else {
-        let x = place.x;
-        let y = place.y;
-    }
-
-    return new Point(x,y);
-}
 
 function clear(place) {
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(place.x, place.y - heightAbove, letterWidth, letterHeight);
-    ctx.fillStyle = letterColor;
+    makeRect(place, backgroundColor);
 }
 
+function makeCursor(point, color) {
+    ctx.fillStyle = color;
+    
+    let x = point.getPixelX();
+    let y = point.getPixelY();
 
+    console.log(y);
+
+    ctx.fillRect(x,y, 5, letterHeight);
+}
 
 window.addEventListener("keydown", handleKeydown);
 
